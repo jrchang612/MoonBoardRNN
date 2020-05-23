@@ -3,6 +3,8 @@ import os
 import copy
 import pickle
 import heapq
+from sklearn import metrics
+import seaborn as sns
 
 """Common Function"""
 
@@ -60,3 +62,17 @@ def get_grade_map_new():
         '8B+': 13,
     }
     return grade_map
+
+def plot_confusion_matrix(Y_true, Y_predict, title = None):
+    matrix = metrics.confusion_matrix(Y_true, Y_predict)
+    con_mat_norm = np.around(matrix / matrix.sum(axis=1)[:, np.newaxis], decimals=2)
+    figure = plt.figure(figsize=(8, 8), dpi = 150)
+    sns.heatmap(con_mat_norm, annot=True,cmap=plt.cm.Blues)
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.xticks(np.arange(13)+0.5,['6B+','6C','6C+','7A','7A+','7B','7B+','7C','7C+','8A','8A+','8B','8B+'])
+    plt.yticks(np.arange(13)+0.5,['6B+','6C','6C+','7A','7A+','7B','7B+','7C','7C+','8A','8A+','8B','8B+'])
+    plt.title(title)
+    plt.show()
+    return
