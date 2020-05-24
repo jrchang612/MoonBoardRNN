@@ -107,6 +107,153 @@ def get_grade_FtToV():
     }
     return grade_FtToV
 # ----------------------------------------------------------------------------------------------------------------------
+# early preprocessing steps
+# ----------------------------------------------------------------------------------------------------------------------
+def classify_and_reorganize_data(raw_data, save_path, delta_xy_mode = False, print_result = False):
+    """
+    Input:
+    - raw_data: the raw data that is scraped from MoonBoard
+    - delta_xy_mode: 
+      if set False(default), the x_vector compiled will be of shape (10, n_holds) (6 hold features, x, y, is_start, is_end)
+      if set True, the x_vector compiled will be of shape (14, n_holds) (6 hold features, x, y, dx1, dy1, dx2, dy2, is_start, is_end)
+    
+    Classify and process the raw data into 4 caterogies/8 dictionaries:
+    - X_dict_benchmark_withgrade: the input data that is benchmarked and contains user grading.
+    - Y_dict_benchmark_withgrade: the output for raw data that is benchmarked and contains user grading.
+    - X_dict_benchmark_nograde: the input data that is benchmarked and does not contain user grading.
+    - Y_dict_benchmark_nograde: the output for raw data that is benchmarked and does not contain user grading.
+    - X_dict_withgrade: the input data that is not benchmarked and contains user grading.
+    - Y_dict_withgrade: the output for raw data that is not benchmarked and contains user grading.
+    - X_dict_nograde: the input data that is not benchmarked and does not contain user grading.
+    - Y_dict_nograde: the output for raw data that is not benchmarked and does not contain user grading.
+    For the ones that do not have user grading, the shape of each item in Y_dict is (2, 1): (grade, is_benchmarked)
+    For the ones that have user grading, the shape of each item in Y_dict is (3, 1): (grade, is_benchmarked, user_grade)
+    """
+    X_dict_benchmark_withgrade = {}
+    Y_dict_benchmark_withgrade = {}
+    X_dict_benchmark_nograde = {}
+    Y_dict_benchmark_nograde = {}
+    X_dict_withgrade = {}
+    Y_dict_withgrade = {}
+    X_dict_nograde = {}
+    Y_dict_nograde = {}
+    list_fail = []
+    for key, item in raw_data.items():
+        # create x_vector
+        try:
+            n_start = len(item['start'])
+            n_mid = len(item['mid'])
+            n_end = len(item['end'])
+            
+            assert(n_start <= 2)
+            assert(n_end <= 2)
+            
+            n_hold = n_start + n_mid + n_end
+            item['start'].sort(key = lambda x: x[1])
+            item['mid'].sort(key = lambda x: x[1])
+            item['end'].sort(key = lambda x: x[1])
+            combined_list = item['start'] + item['mid'] + item['end']
+
+            if delta_xy_mode:
+                x_vectors = np.zeros((14, n_hold))
+                for i, (x, y) in enumerate(combined_list):
+                    x_vectors[0:6, i] = feature_dict[(x, y)] # 6 hand features
+                    x_vectors[6:8, i] = [x, y] #(x, y)
+                    if i == 0:
+                        pass
+                    elif i == 1:
+                        x_vectors[8:10, i] = x_vectors[6:8, i] - x_vectors[6:8, i-1]
+                    else:
+                        x_vectors[8:10, i] = x_vectors[6:8, i] - x_vectors[6:8, i-1]
+                        x_vectors[10:12, i] = x_vectors[6:8, i] - x_vectors[6:8, i-2]
+                x_vectors[12:, 0:n_start] = np.array([[1], [0]])
+                x_vectors[12:, n_start+n_mid:] = np.array([[0], [1]])
+
+            else:
+                x_vectors = np.zeros((10, n_hold))
+                for i, (x, y) in enumerate(combined_list):
+                    x_vectors[0:6, i] = feature_dict[(x, y)] # 6 hand features
+                    x_vectors[6:8, i] = [x, y] #(x, y)
+                x_vectors[8:, 0:n_start] = np.array([[1], [0]])
+                x_vectors[8:, n_start+n_mid:] = np.array([[0], [1]])
+
+            # save x_vector into the correct dictionary
+            if item['is_benchmark']:
+                if item['user_grade'] is None:
+                    X_dict_benchmark_nograde[key] = x_vectors
+                    Y_dict_benchmark_nograde[key] = np.array([[grade_map[item['grade']]], 
+                                                                [int(item['is_benchmark'])]])
+                else:
+                    X_dict_benchmark_withgrade[key] = x_vectors
+                    Y_dict_benchmark_withgrade[key] = np.array([[grade_map[item['grade']]], 
+                                                                [int(item['is_benchmark'])], 
+                                                                [grade_map[item['user_grade']]]])
+            elif item['user_grade'] is None:
+                X_dict_nograde[key] = x_vectors
+                Y_dict_nograde[key] = np.array([[grade_map[item['grade']]], 
+                                                  [int(item['is_benchmark'])]])
+            else:
+                X_dict_withgrade[key] = x_vectors
+                Y_dict_withgrade[key] = np.array([[grade_map[item['grade']]], 
+                                                  [int(item['is_benchmark'])],
+                                                  [grade_map[item['user_grade']]]])
+            if print_result:
+                print('Complete processing of %s' %key)
+            
+        except:
+            print('Raw data with key %s contains error' %key)
+            list_fail.append(key)
+
+    output = {'X_dict_benchmark_withgrade': X_dict_benchmark_withgrade,
+              'Y_dict_benchmark_withgrade': Y_dict_benchmark_withgrade, 
+              'X_dict_benchmark_nograde': X_dict_benchmark_nograde, 
+              'Y_dict_benchmark_nograde': Y_dict_benchmark_nograde, 
+              'X_dict_withgrade': X_dict_withgrade, 
+              'Y_dict_withgrade': Y_dict_withgrade, 
+              'X_dict_nograde': X_dict_nograde, 
+              'Y_dict_nograde': Y_dict_nograde, 
+              'list_fail': list_fail}
+    
+    save_pickle(output, save_path)
+    print('result saved.')
+    return output
+
+def generate_organized_sequence_data(raw_data, save_path):
+    """
+    Input:
+    - raw_data: the raw data that is scraped from MoonBoard
+    - delta_xy_mode: 
+      if set False(default), the x_vector compiled will be of shape (10, n_holds) (6 hold features, x, y, is_start, is_end)
+      if set True, the x_vector compiled will be of shape (14, n_holds) (6 hold features, x, y, dx1, dy1, dx2, dy2, is_start, is_end)
+    
+    Classify and process the raw data into 2 dictionaries:
+    - X_dict
+    - Y_dict
+    """
+    X_dict_seq = {}
+    list_fail = []
+    for key, item in raw_data.items():
+        try:
+            output = produce_sequence(keyNum = key, X_dict = raw_data, n_return = 1)
+            result = np.vstack([
+                raw_data[key][6:8, output[0].handSequence], 
+                (np.array(output[0].handOperator) == 'LH')*(-1) + (np.array(output[0].handOperator) == 'RH')*1, 
+                output[0].successScoreSequence])
+            X_dict_seq[key] = result
+        except:
+            print('data with key %s contains error' %key)
+            list_fail.append(key)
+        
+        save_pickle(X_dict_seq, save_path)
+
+    final_output = {'X_dict_seq': X_dict_seq,
+              'list_fail': list_fail}
+    
+    save_pickle(X_dict_seq, save_path)
+    print('result saved.')
+    return final_output
+
+# ----------------------------------------------------------------------------------------------------------------------
 # sequence generation related function
 # ----------------------------------------------------------------------------------------------------------------------
 
