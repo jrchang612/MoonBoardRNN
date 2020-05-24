@@ -4,9 +4,9 @@ import copy
 import pickle
 import heapq
 from sklearn import metrics
-import seaborn as sns
-
-"""Common Function"""
+import matplotlib.pyplot as plt
+import seaborn as sn
+import pandas as pd
 
 def save_pickle(data, file_name):
     """
@@ -16,63 +16,101 @@ def save_pickle(data, file_name):
         pickle.dump(data, f)
     return None
 
-"""For Final Preprocessing Step"""
-def get_grade_map():
-    """
-    Defines a mapping of Fontainebleau grades to integer values
-    """
-    grade_map = {
-        '6A': 0,
-        '6A+': 1,
-        '6B': 2,
-        '6B+': 3,
-        '6C': 4,
-        '6C+': 5,
-        '7A': 6,
-        '7A+': 7,
-        '7B': 8,
-        '7B+': 9,
-        '7C': 10,
-        '7C+': 11,
-        '8A': 12,
-        '8A+': 13,
-        '8B': 14,
-        '8B+': 15,
-    }
-    return grade_map
-
-def get_grade_map_new():
-    """
-    Defines a mapping of Fontainebleau grades to integer values
-    """
-    grade_map = {
-        '6B': 0,
-        '6B+': 1,
-        '6C': 2,
-        '6C+': 3,
-        '7A': 4,
-        '7A+': 5,
-        '7B': 6,
-        '7B+': 7,
-        '7C': 8,
-        '7C+': 9,
-        '8A': 10,
-        '8A+': 11,
-        '8B': 12,
-        '8B+': 13,
-    }
-    return grade_map
 
 def plot_confusion_matrix(Y_true, Y_predict, title = None):
-    matrix = metrics.confusion_matrix(Y_true, Y_predict)
-    con_mat_norm = np.around(matrix / matrix.sum(axis=1)[:, np.newaxis], decimals=2)
-    figure = plt.figure(figsize=(8, 8), dpi = 150)
-    sns.heatmap(con_mat_norm, annot=True,cmap=plt.cm.Blues)
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.xticks(np.arange(13)+0.5,['6B+','6C','6C+','7A','7A+','7B','7B+','7C','7C+','8A','8A+','8B','8B+'])
-    plt.yticks(np.arange(13)+0.5,['6B+','6C','6C+','7A','7A+','7B','7B+','7C','7C+','8A','8A+','8B','8B+'])
-    plt.title(title)
+    """
+    Plot the confusion matrix.
+    """
+    labels = ['V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13']
+    conf_matrix = metrics.confusion_matrix(Y_true, Y_predict)
+    df_cm = pd.DataFrame((conf_matrix/np.sum(conf_matrix, axis = 1, keepdims = True)), 
+                         index = [i for i in labels],
+                         columns = [i for i in labels])
+    plt.figure(dpi = 150, figsize = (10,7))
+    sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues)
+    plt.xlabel('predicted grade')
+    plt.ylabel('actual grade')
+    if title:
+        plt.title(title)
     plt.show()
     return
+
+def plot_history(history_all, model_name):
+    """
+    Plot the training history of the model
+    """
+    # Plot training & validation accuracy values
+    acc = []
+    val_acc = []
+    loss = []
+    val_loss = []
+    for history in history_all:
+        acc.append(history.history['sparse_categorical_accuracy'])
+        val_acc.append(history.history['val_sparse_categorical_accuracy'])
+        loss.append(history.history['loss'])
+        val_loss.append(history.history['val_loss'])
+
+    acc = sum(acc, [])
+    val_acc = sum(val_acc, [])
+    loss = sum(loss, [])
+    val_loss = sum(val_loss, [])
+
+    fig, axes = plt.subplots(nrows = 1, ncols = 2, dpi = 150)
+    axes[0].plot(acc)
+    axes[0].plot(val_acc)
+    axes[0].set_title('Accuracy of '+ model_name)
+    axes[0].set_ylabel('Accuracy')
+    axes[0].set_xlabel('Epoch')
+    axes[0].legend(['Train', 'Dev'], loc='upper left')
+
+    axes[1].plot(loss)
+    axes[1].plot(val_loss)
+    axes[1].set_title('Loss of ' + model_name)
+    axes[1].set_ylabel('Loss')
+    axes[1].set_xlabel('Epoch')
+    axes[1].legend(['Train', 'Dev'], loc='upper left')
+    plt.tight_layout()
+    
+    history_package = {'acc': acc, 
+                       'val_acc': val_acc, 
+                       'loss': loss, 
+                       'val_loss': val_loss}
+    return history_package
+
+def plot_history_package(history_package, model_name):
+    """
+    Plot the training history of the model (from saved history package)
+    """
+    # Plot training & validation accuracy values
+    acc = history_package['acc']
+    val_acc = history_package['val_acc']
+    loss = history_package['loss']
+    val_loss = history_package['val_loss']
+
+    fig, axes = plt.subplots(nrows = 1, ncols = 2, dpi = 150)
+    axes[0].plot(acc)
+    axes[0].plot(val_acc)
+    axes[0].set_title('Accuracy of '+ model_name)
+    axes[0].set_ylabel('Accuracy')
+    axes[0].set_xlabel('Epoch')
+    axes[0].legend(['Train', 'Dev'], loc='upper left')
+
+    axes[1].plot(loss)
+    axes[1].plot(val_loss)
+    axes[1].set_title('Loss of ' + model_name)
+    axes[1].set_ylabel('Loss')
+    axes[1].set_xlabel('Epoch')
+    axes[1].legend(['Train', 'Dev'], loc='upper left')
+    plt.tight_layout()
+
+    return
+
+def compute_accuracy(y_true, y_predict):
+    """
+    Compute the accuracy of the model
+    - complete_accurate: the model output match the expected output exactly
+    - roughly_accurate: the model output is only different from the expected output by less than or equal to 1 grade.
+    """
+    complete_accurate = np.sum(y_true == y_predict)/len(y_true)
+    roughly_accurate = np.sum(np.abs(y_true - y_predict) <= 1)/len(y_true)
+    return (complete_accurate, roughly_accurate)
