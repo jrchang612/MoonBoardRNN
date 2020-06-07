@@ -5,6 +5,7 @@
     -webkit-box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
     -moz-box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
     margin: 10px 0px;
+    z-index: 1;
 }
 
 .grid-container {
