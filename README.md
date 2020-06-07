@@ -37,7 +37,7 @@ To run GradeNet, open the jupyter notebook in `\model\GradeNet.ipynb` and follow
 
 #### DeepRouteSet
 
-To run GradeNet, open the jupyter notebook in `\model\DeepRouteSet_v4.ipynb` and follow the instructions. You can either re-run the experiments, or load the pretrained weights `\model\DeepRouteSetMedium_v1.h5`.
+To run GradeNet, open the jupyter notebook in `\model\DeepRouteSet_v4.ipynb` and follow the instructions. You can either re-run the experiments, or load the pretrained weights `\model\DeepRouteSetMedium_v1.h5`. The code in this file is largely modified from a Coursera problem exercise "Improvise a Jazz Solo with an LSTM Network", which is originally modified from https://github.com/jisungk/deepjazz.
 
 #### Predict the grade of generated problems
 
