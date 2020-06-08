@@ -15,7 +15,7 @@ This is the project repository for the CS230 Spring 2020 course project, and is 
 ### `raw_data`
 This folder contains the hold difficulty scores evaluated by climbing experts (`\raw_data\HoldFeature2016LeftHand.csv`, `\raw_data\HoldFeature2016RightHand.csv`, `\raw_data\HoldFeature2016.xlsx`) and our scraped raw data from the MoonBoard website (`\raw_data\moonGen_scrape_2016_final`).
 
-The raw data from the MoonBoard website was scraped using the code in https://github.com/gestalt-howard/moonGen.
+The raw data from the MoonBoard website was scraped using the code in https://github.com/gestalt-howard/moonGen. We acknowledged the permission from Howard (Cheng-Hao) Tai to use that code.
 
 ### `preprocessing`
 There are 4 jupyter notebooks in the `preprocessing` folder:

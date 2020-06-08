@@ -248,8 +248,9 @@ def plotAProblem(stringList, title = None, key = None, save = None):
         y = y + [(1020 - 52 * int(res[0][1]))]# * img.shape[1] / 1024]
 
     # Create a figure. Equal aspect so circles look circular
-    fig,ax = plt.subplots(1)
+    fig, ax = plt.subplots(1, dpi = 100)
     ax.set_aspect('equal')
+    plt.axis('off')
 
     # Show the image
     ax.imshow(img)
