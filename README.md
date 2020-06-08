@@ -12,11 +12,10 @@ This is the project repository for the CS230 Spring 2020 course project, and is 
 
 ## Overview of our repository
 
-### `scraping`
-The scraping code is cloned and modified from https://github.com/gestalt-howard/moonGen.
-
 ### `raw_data`
 This folder contains the hold difficulty scores evaluated by climbing experts (`\raw_data\HoldFeature2016LeftHand.csv`, `\raw_data\HoldFeature2016RightHand.csv`, `\raw_data\HoldFeature2016.xlsx`) and our scraped raw data from the MoonBoard website (`\raw_data\moonGen_scrape_2016_final`).
+
+The raw data from the MoonBoard website was scraped using the code in https://github.com/gestalt-howard/moonGen.
 
 ### `preprocessing`
 There are 4 jupyter notebooks in the `preprocessing` folder:
@@ -47,10 +46,6 @@ To evaluate the generated problems, open the jupyter notebook in `\model\Evaluat
 ### `out`
 This folder contains our generated problems. The folder `\out\DeepRouteSet_v1` contains style prediction results of our generated data. Those style predictions are very preliminary, and please ignore that part.
 
-### `website`
-This is a static website that shows the 65 generated MoonBoard problems using DeepRouteSet. The link to the website: https://jrchang612.github.io/MoonBoardRNN/website/.
-
-The layout of this website is modified from https://github.com/andrew-houghton/moon-board-climbing.
-
 ## Potential future items
 * StyleNet
+* Website
