@@ -25,8 +25,8 @@ function clear_board() {
 function random_climb() {
     var model = document.querySelector('input[name="model"]:checked').value;
     var index = Math.floor(Math.random() * climbs[model].length)
-    var background = document.getElementsByClassName("background-image");
-    display(climbs[model][index].moves)
+    var background = document.querySelector('[title="MoonBoard Wall"]')
+    //display(climbs[model][index].moves)
     display_grades(climbs[model][index].grade)
     background.style.backgroundImage = "url("+climbs[model][index].file_name+")";
 }
